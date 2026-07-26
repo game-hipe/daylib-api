@@ -6,6 +6,7 @@ from loguru import logger
 
 
 def init():
+    """Инициализировать логи"""
     log_dir = Path(".logs")
     log_dir.mkdir(parents=True, exist_ok=True)
 

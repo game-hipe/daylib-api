@@ -69,6 +69,38 @@ services:
       - ".env"
 
 
+  spider_celery:
+    build: .
+    container_name: "app-celery-spider"
+    entrypoint: ""
+    command: celery -A core.manager.spider._worker worker
+
+    volumes:
+      - ${VIDEO_PATH}:${VIDEO_PATH}
+
+    env_file:
+      - ".env"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+
+  ffmpeg_celery:
+    build: .
+    container_name: "app-celery-ffmpeg"
+    entrypoint: ""
+    command: celery -A core.spider.hentai._task worker
+
+    volumes:
+      - ${VIDEO_PATH}:${VIDEO_PATH}
+
+    env_file:
+      - ".env"
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
 
 volumes:
   postgres_data:

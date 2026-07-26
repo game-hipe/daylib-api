@@ -9,14 +9,30 @@ from .exception import StatusCodeException
 
 
 async def random_backoff(response: ClientResponse):
+    """Рандомное ожидание умножает на раномное число интерва
+
+    Args:
+        response (ClientResponse): Ответ от запроса
+    """
     await asyncio.sleep(response.client.interval * random())
 
 
 async def linear_backoff(response: ClientResponse):
+    """Линейное ожидание, работает по формуле:
+    `ИНТЕРВАЛ` * `КОЛИЧЕСТВО ПОПЫТОК`
+
+    Args:
+        response (ClientResponse): Ответ от запроса
+    """
     await asyncio.sleep(response.client.interval * response.attempt)
 
 
 async def magic_backoff(response: ClientResponse):
+    """умное ожидани, ждёт в зависимости от ответа
+
+    Args:
+        response (ClientResponse): Ответ от запроса
+    """
     if not response.error:
         await asyncio.sleep(response.client.interval)
         return

@@ -1,16 +1,14 @@
 import asyncio
 import re
-
 from collections import defaultdict
 from functools import lru_cache
 
 import chompjs
-
 from loguru import logger
 
-from ....manager.client import AiohttpClient
 from ....abstract.spider.spider import _SpiderSoup
-from ....exception import ParseError, StatusCodeException, RequiredObjNotFoundException
+from ....exception import ParseError, RequiredObjNotFoundException, StatusCodeException
+from ....manager.client import AiohttpClient
 from ..base import BaseHentaiSpider, HentaiVideoSchema
 
 
@@ -18,7 +16,7 @@ class AniHideSpider(BaseHentaiSpider[AiohttpClient]):
     BASE_URL = "https://online1.anihidee.org/"
     BASE_TAG = "hentai"
     IFRAME_RE = r"const\s+CONFIG\s*=\s*\{[\s\S]*?\};"
-    REQUES_HEADERS = {"referer": BASE_URL}
+    REQUES_HEADERS = {"referer": BASE_URL}  # noqa: RUF012
 
     async def get_page(self, page, **kwargs):
         async with self.client.request(
@@ -160,7 +158,7 @@ class AniHideSpider(BaseHentaiSpider[AiohttpClient]):
                                 },
                             )
                         )
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         logger.exception("Не валидный JSON", extra={"config": config})
         return result
 
@@ -231,7 +229,8 @@ class AniHideSpider(BaseHentaiSpider[AiohttpClient]):
         return []
 
     @lru_cache(1)
-    def _extract_headers(self, soup: _SpiderSoup) -> dict[str, list[str]]:
+    @staticmethod
+    def _extract_headers(soup: _SpiderSoup) -> dict[str, list[str]]:
         result = defaultdict(list)
         for li in soup.select('ul[class*="pmovie__header-list"] li'):
             try:

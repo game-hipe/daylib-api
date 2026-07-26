@@ -1,11 +1,12 @@
-import asyncio
+from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 from loguru import logger
 
 if TYPE_CHECKING:
-    from ..abstract.alert import BaseAlert, LEVEL
+    from ..abstract.alert import LEVEL, BaseAlert
 
 
 class AlertManager:
@@ -41,7 +42,7 @@ class AlertManager:
             if not success and alert.delete:
                 self.delete_alert(alert)
 
-        except Exception:
+        except Exception:  # noqa: BLE001
             if alert.delete:
                 self.delete_alert(alert)
 

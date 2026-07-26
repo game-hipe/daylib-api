@@ -72,7 +72,7 @@ services:
     build: .
     container_name: "app-celery-spider"
     entrypoint: ""
-    command: celery -A core.manager.spider._worker worker
+    command: celery -A core.celery worker -Q default
 
     volumes:
       - ${VIDEO_PATH}:${VIDEO_PATH}

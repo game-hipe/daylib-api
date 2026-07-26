@@ -22,7 +22,9 @@ class _BaseException(Exception):
     def error(self) -> str:
         cols = self.__init__.__annotations__
         values = {col: getattr(self, col) for col in cols}
-        return f"Ошибка: {str(self)} ({', '.join(f'{k}={v!r}' for k, v in values.items())})"
+        return (
+            f"Ошибка: {self!s} ({', '.join(f'{k}={v!r}' for k, v in values.items())})"
+        )
 
 
 class ClientException(_BaseException):

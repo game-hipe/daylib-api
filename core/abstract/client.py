@@ -1,15 +1,15 @@
 import asyncio
-from random import choice
 from abc import ABC, abstractmethod
-from collections.abc import AsyncGenerator
-from dataclasses import dataclass
-from typing import Generic, TypeVar, TypedDict, Awaitable, Callable, Unpack
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from random import choice
+from typing import Generic, TypedDict, TypeVar, Unpack
 
 from loguru import logger
 
-from ..exception import ClientException, MaxAttemtException
 from .._utils import magic_backoff
+from ..exception import ClientException, MaxAttemtException
 
 _S = TypeVar("_S")
 _R = TypeVar("_R")

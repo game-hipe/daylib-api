@@ -1,18 +1,17 @@
 import asyncio
 
-from sqlalchemy.ext.asyncio import create_async_engine
-from loguru import logger
-from uvicorn import Config, Server
 from dotenv import load_dotenv
+from loguru import logger
+from sqlalchemy.ext.asyncio import create_async_engine
+from uvicorn import Config, Server
 
-from core.manager.database import ModelManager, SearchManager
-from core.manager.client import AiohttpClient, PatchrightClient
-from core.manager.spider import SpiderManager
-from core.manager.alert import AlertManager
 from api.app import ContentAPI
-
 from core._log import init
 from core.config import setting
+from core.manager.alert import AlertManager
+from core.manager.client import AiohttpClient, PatchrightClient
+from core.manager.database import ModelManager, SearchManager
+from core.manager.spider import SpiderManager
 
 init()
 load_dotenv()

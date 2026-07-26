@@ -1,5 +1,5 @@
 from loguru import logger
-from pydantic import Field, PostgresDsn, model_validator, computed_field
+from pydantic import Field, PostgresDsn, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

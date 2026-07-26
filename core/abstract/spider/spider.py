@@ -1,43 +1,44 @@
+from __future__ import annotations
+
 import asyncio
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator, Callable
+from functools import wraps
+from itertools import batched, count
 from typing import (
+    TYPE_CHECKING,
     Any,
-    Callable,
+    ClassVar,
+    Generic,
     Literal,
     ParamSpec,
     Self,
     TypeVar,
-    Generic,
-    ClassVar,
-    AsyncGenerator,
     get_args,
     overload,
-    TYPE_CHECKING,
 )
-from itertools import batched, count
-from functools import wraps
 from urllib.parse import urljoin
 
-from loguru import logger
 from bs4 import _IncomingMarkup
+from loguru import logger
 from sqlalchemy.exc import IntegrityError
 
+from ...entitie import AddContent, ChangeSchema, PreviewContent
+from ...exception import SpiderException, _BaseException
+from ..client import BaseClient
+from ._bs import _SpiderSoup
+from ._status import SpiderParsingStatus
 from .schema import (
-    Pagination,
     GetInfoResult,
     MiddlewareInfoResult,
+    Pagination,
     ParsingPaginationResult,
     _BasePagination,
 )
-from ._bs import _SpiderSoup
-from ._status import SpiderParsingStatus
-from ..client import BaseClient
-from ...entitie import PreviewContent, AddContent, ChangeSchema
-from ...exception import SpiderException, _BaseException
 
 if TYPE_CHECKING:
-    from ...manager.alert import AlertManager, LEVEL  # type: ignore
     from ...entitie.schema import GetContent  # type: ignore
+    from ...manager.alert import LEVEL, AlertManager  # type: ignore
     from ...manager.database.model import ModelManager, _FastConnection  # type: ignore
     from .middleware import SpiderMiddleware  # type: ignore
 
@@ -64,7 +65,7 @@ class _BuildSchema(ABC, Generic[_R]):
             logger.error(URL_ERROR_MESSAGE)
             raise ValueError(URL_ERROR_MESSAGE)
 
-        if not getattr(cls, "BASE_TAG"):
+        if not cls.BASE_TAG:
             logger.info(
                 f"Не был указан обычный тэг для паука {cls}, функция `create_content` теперь требует тэг"
             )
@@ -144,7 +145,7 @@ class _BuildSchema(ABC, Generic[_R]):
     def create_pagination(
         self,
         current_page: int,
-        items: list["PreviewContent"],
+        items: list[PreviewContent],
         total_page: int | None = None,
         end_page: bool | None = None,
     ) -> Pagination:
@@ -181,9 +182,7 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
     FIELDS_MAP: dict[str, str] | None = None
     """Карта для заполнений пример: `{'Теги': 'genre'}`"""
 
-    BASE_MIDDLEWARE: (
-        list[type["SpiderMiddleware"]] | type["SpiderMiddleware"] | None
-    ) = None
+    BASE_MIDDLEWARE: list[type[SpiderMiddleware]] | type[SpiderMiddleware] | None = None
     """Базовые Middleware"""
 
     def __init__(
@@ -193,9 +192,7 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
         alert: AlertManager | None = None,
         batch: int | None = None,
         *,
-        middleware: list[type["SpiderMiddleware"]]
-        | type["SpiderMiddleware"]
-        | None = None,
+        middleware: list[type[SpiderMiddleware]] | type[SpiderMiddleware] | None = None,
         use_middleware: bool = True,
         **kwargs,
     ):
@@ -242,7 +239,7 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
 
     async def start_parsing(
         self,
-        manager: "ModelManager",
+        manager: ModelManager,
         start_page: int = 1,
         pagination_kwargs: dict | None = None,
         update: bool = False,
@@ -404,9 +401,12 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
         ):
             tasks: list[asyncio.Task[GetInfoResult[_R] | AddContent | None]] = []
             for item in page.items:
-                if connection and not allow_unique:
-                    if await connection.in_database(item.url):
-                        continue
+                if (
+                    connection
+                    and not allow_unique
+                    and await connection.in_database(item.url)
+                ):
+                    continue
 
                 tasks.append(
                     asyncio.create_task(self.get_info(str(item.url), **kwargs))
@@ -420,7 +420,7 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
                 except _BaseException as e:
                     logger.error(e.error())
 
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.exception(
                         f"Неизвестная ошибка во время получение данных: {e}"
                     )
@@ -444,7 +444,7 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
 
     async def start_parsing_generator(
         self,
-        manager: "ModelManager",
+        manager: ModelManager,
         start_page: int = 1,
         pagination_kwargs: dict | None = None,
         update: bool = False,
@@ -592,7 +592,7 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
         }
 
     def __set_info_middleware(
-        self, middleware: "SpiderMiddleware[Self, GetContent]"
+        self, middleware: SpiderMiddleware[Self, GetContent]
     ) -> None:
         """Установить middleware
 
@@ -661,5 +661,5 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
     def need_client(cls) -> type[_C]:
         value = get_args(cls.__orig_bases__[0])[0]
         if isinstance(value, TypeVar):
-            raise ValueError("Не указан необходимый тип")
+            raise TypeError("Не указан необходимый тип")
         return value

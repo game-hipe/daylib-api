@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from loguru import logger
 from typing import TYPE_CHECKING, Literal
 
+from loguru import logger
+
 if TYPE_CHECKING:
-    from ...abstract.spider import BaseSpider
     from ...abstract.client import BaseClient
-    from ..database.model import ModelManager
+    from ...abstract.spider import BaseSpider
     from ..alert import AlertManager
+    from ..database.model import ModelManager
     from ._task import TaskState
     from ._typing import SPIDER
 
@@ -149,7 +150,7 @@ class SpiderManager:
         """Получить статус всех пауков которые были запущены"""
 
         result = await self._task_manager.get_status()
-        _used_name = set(x.name for x in result)
+        _used_name = {x.name for x in result}
 
         for spider in self._spiders:
             if spider.name() not in _used_name:

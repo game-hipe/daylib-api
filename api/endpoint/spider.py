@@ -1,15 +1,15 @@
 import asyncio
 import json
+from typing import Annotated, Literal
 
-from typing import Literal
-
-from fastapi import HTTPException, Query, Body
+from fastapi import Body, HTTPException, Query
 from fastapi.websockets import WebSocket, WebSocketDisconnect
 
-from ..base import BaseAPI
-from .._alert import AdminAlert
-from core.spider import __all__
 from core.manager.spider._status import SpiderStatusSnapshotSchema
+from core.spider import __all__
+
+from .._alert import AdminAlert
+from ..base import BaseAPI
 
 TaskState = Literal[
     "pending",
@@ -23,7 +23,9 @@ TaskState = Literal[
     "all",
 ]
 
-Spider = Literal[*__all__]
+Spider = Literal[
+    *__all__
+]  # NOTE: По большей части просто для FastAPI а не на статическую типизацию mypy
 
 
 class SpiderAPI(BaseAPI):
@@ -41,11 +43,12 @@ class SpiderAPI(BaseAPI):
 
     async def start_spider(
         self,
-        spider: Spider,  # type: ignore
-        start_page: int = Query(1, ge=1),
-        pagination_kwargs: dict | None = Body(None),
-        update: bool = Query(False),
-        force: bool = Query(False),
+        *,
+        spider: Annotated[Spider, Query()],
+        start_page: Annotated[int, Query(1, ge=1)],
+        pagination_kwargs: Annotated[dict | None, Body(None)],
+        update: Annotated[bool, Query(False)],
+        force: Annotated[bool, Query(False)],
     ) -> SpiderStatusSnapshotSchema:
         status = await self.content.spider.start_spider(
             spider=spider,
@@ -59,7 +62,8 @@ class SpiderAPI(BaseAPI):
 
     async def stop_spider(
         self,
-        spider: Spider,  # type: ignore
+        *,
+        spider: Annotated[Spider, Query()],
     ) -> SpiderStatusSnapshotSchema:
         try:
             status = await self.content.spider.stop_spider(spider)
@@ -72,20 +76,20 @@ class SpiderAPI(BaseAPI):
 
         return SpiderStatusSnapshotSchema.model_validate(status.to_snapshot())
 
-    async def start_all_spider(self) -> None:
-        return list(
+    async def start_all_spider(self) -> list[SpiderStatusSnapshotSchema]:
+        return [
             SpiderStatusSnapshotSchema.model_validate(x.to_snapshot())
             for x in await self.content.spider.start_all_spider()
-        )
+        ]
 
     async def stop_all_spider(self) -> None:
         await self.content.spider.stop_all_spider()
 
     async def get_status(self) -> list[SpiderStatusSnapshotSchema]:
-        return list(
+        return [
             SpiderStatusSnapshotSchema.model_validate(x.to_snapshot())
             for x in await self.content.spider.get_status()
-        )
+        ]
 
     async def status_websocket(self, websocket: WebSocket) -> None:
         websocket.close()
@@ -142,5 +146,7 @@ class SpiderAPI(BaseAPI):
             except ValueError:
                 pass
 
-    async def recover_spider(self, state: TaskState = Query("idle")) -> None:
+    async def recover_spider(
+        self, *, state: Annotated[TaskState, Query("idle")]
+    ) -> None:
         await self.content.spider.recover(state)

@@ -1,7 +1,8 @@
 from typing import Any, Self
 
+from bs4 import BeautifulSoup, ResultSet, Tag
+
 from ...exception import RequiredObjNotFoundException
-from bs4 import BeautifulSoup, Tag, ResultSet
 
 
 class _SpiderTag(Tag):

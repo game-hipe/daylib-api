@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator, Callable
 from functools import wraps
-from typing import Generic, ParamSpec, TypeVar, Callable, AsyncGenerator, TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, ParamSpec, TypeVar
+
+from loguru import logger
 
 if TYPE_CHECKING:
-    from .spider import BaseSpider
     from .schema import MiddlewareInfoResult
+    from .spider import BaseSpider
 
 _T = TypeVar("_T", bound="BaseSpider")
 _R = TypeVar("_R")
@@ -31,8 +36,15 @@ class SpiderMiddleware(ABC, Generic[_T, _R]):
 
                     yield await self._process_result(result)
 
-            except Exception as e:
-                yield await self._handle_error(e)
+            except Exception as e:  # noqa: BLE001
+                logger.exception(
+                    f"Ошибка во время обработки результат (middleware={self.__class__.__name__!r}, spider={self.spider.name()!r})",
+                    extra={
+                        "middleware": self.__class__.__name__,
+                        "spider": self.spider.name(),
+                    },
+                )
+                await self._handle_error(e)
 
         return _info_wrapper
 

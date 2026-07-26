@@ -11,10 +11,10 @@ from celery.contrib.abortable import AbortableAsyncResult
 from loguru import logger
 
 from ._status import (
-    SpiderStatus,
-    SpiderStatusSnapshot,
     ACTIVE_STATES,
     END_STATES,
+    SpiderStatus,
+    SpiderStatusSnapshot,
     TaskState,
 )
 from ._typing import SPIDER
@@ -23,8 +23,8 @@ from ._worker import Worker
 if TYPE_CHECKING:
     from ...abstract.spider import BaseSpider
     from ...abstract.spider._status import SpiderParsingStatus
+    from ...manager.alert import LEVEL, AlertManager
     from ...manager.database.model import ModelManager
-    from ...manager.alert import AlertManager, LEVEL
 
 
 class _StateStorage:
@@ -48,7 +48,7 @@ class _StateStorage:
 
         try:
             return json.loads(self.path.read_text(encoding="utf-8"))
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             logger.warning(
                 "Не удалось загрузить сохранённое состояние задач: %s. Файл будет перезаписан.",
                 error,
@@ -79,7 +79,7 @@ class _StateStorage:
 
 @dataclass
 class TaskRecord:
-    spider: "BaseSpider"
+    spider: BaseSpider
     parser_status: SpiderParsingStatus | None
     status: SpiderStatus
     progress_watcher: asyncio.Task | None = None
@@ -91,7 +91,7 @@ class TaskManager:
 
     def __init__(
         self,
-        model: "ModelManager",
+        model: ModelManager,
         batch: int | None = None,
         alert: AlertManager | None = None,
         use_celery: bool = True,
@@ -134,7 +134,7 @@ class TaskManager:
 
     async def recover(
         self,
-        spiders: list["BaseSpider"],
+        spiders: list[BaseSpider],
         state: TaskState | Literal["all"] = "interrupted",
     ) -> list[SpiderStatus]:
         """Перезапустить всех пауков которые находятся в `self._status`
@@ -148,9 +148,8 @@ class TaskManager:
 
         recovered: list[SpiderStatus] = []
         for status in list(self._status.values()):
-            if state != "all":
-                if status.state != state:
-                    continue
+            if state != "all" and status.state != state:
+                continue
 
             spider = next(
                 (item for item in spiders if item.name() == status.name), None
@@ -173,7 +172,7 @@ class TaskManager:
 
     async def register_task(
         self,
-        spider: "BaseSpider",
+        spider: BaseSpider,
         *,
         start_page: int = 1,
         pagination_kwargs: dict | None = None,
@@ -202,9 +201,8 @@ class TaskManager:
 
         async with self._lock:
             existing = self._status.get(name)
-            if existing and existing.state in ACTIVE_STATES:
-                if not force:
-                    return existing
+            if existing and existing.state in ACTIVE_STATES and not force:
+                return existing
 
         logger.debug(f"Запуск паука: {name}")
         if existing and existing.state in ACTIVE_STATES:
@@ -314,7 +312,7 @@ class TaskManager:
                 else:
                     logger.warning("Celery ничего не ввернул")
 
-            except Exception:
+            except Exception:  # noqa: BLE001
                 logger.exception(f"Не удалось остановить задачу Celery {name}")
 
             await status.set_state("cancelled")
@@ -373,7 +371,7 @@ class TaskManager:
 
     async def _start_celery_task(
         self,
-        spider: "BaseSpider",
+        spider: BaseSpider,
         status: SpiderStatus,
         start_kwargs: dict[str, Any],
     ) -> SpiderStatus:
@@ -549,7 +547,7 @@ class TaskManager:
                 error = None
                 try:
                     error = str(task.result)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     error = "Неизвестная ошибка Celery"
                 await status.set_state("failed", error=error)
             else:

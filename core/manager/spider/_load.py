@@ -1,4 +1,5 @@
 import importlib
+
 from loguru import logger
 
 from ...abstract.client import BaseClient
@@ -60,7 +61,7 @@ def load_spider(
 
         try:
             client_type = spider_factory.need_client()
-        except ValueError:
+        except TypeError:
             logger.warning(f"Не указан необходимый клиент у паука: `{spider_factory}`")
             continue
 

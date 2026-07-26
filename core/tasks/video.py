@@ -1,19 +1,16 @@
-import time
 import math
-
+import time
 from pathlib import Path
 
-from celery.utils.serialization import UnpickleableExceptionWrapper
 import ffmpeg
+from celery.utils.serialization import UnpickleableExceptionWrapper
 from loguru import logger
 
-from .._celery import load_celery
+from ..celery import app
 
 DEFAULT_FRAGMENT_PATH = "fragments"
 DEFAULT_M3U8_NAME = "index.m3u8"
 DEFAULT_VIDEO_NAME = "video.mp4"
-
-app = load_celery("video")
 
 
 def video_check(video_path: str) -> Path:
@@ -42,7 +39,8 @@ def wait_check(func, /, *args, **kwargs):
     while True:
         try:
             return func(*args, **kwargs)
-        except Exception:
+
+        except Exception:  # noqa: BLE001
             time.sleep(0.1)
 
 
@@ -181,8 +179,7 @@ def process_fragments(
     file_path = path / "files.txt"
 
     with open(file_path, "w") as file:
-        for f in files:
-            file.write(f"file '{f.absolute().as_posix()}'\n")
+        file.writelines(f"file '{f.absolute().as_posix()}'\n" for f in files)
 
     try:
         (
@@ -231,7 +228,8 @@ def create_m3u8(
             probe = ffmpeg.probe(str(file))
             dur = probe.get("format", {}).get("duration")
             return float(dur) if dur else 10.0
-        except Exception as e:
+
+        except ffmpeg.Error as e:
             print(f"Ошибка при анализе длительности {file.name}: {e}")
             return 10.0
 

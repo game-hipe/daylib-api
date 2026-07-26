@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
@@ -18,7 +20,7 @@ class BaseAPI(APIRouter):
         prefix="",
         tags=None,
         dependencies=None,
-        default_response_class=Default(JSONResponse),
+        default_response_class=Default(JSONResponse),  # noqa: B008
         responses=None,
         callbacks=None,
         routes=None,
@@ -31,8 +33,8 @@ class BaseAPI(APIRouter):
         lifespan=None,
         deprecated=None,
         include_in_schema=True,
-        generate_unique_id_function=Default(generate_unique_id),
-        strict_content_type=Default(True),
+        generate_unique_id_function=Default(generate_unique_id),  # noqa: B008
+        strict_content_type=Default(True),  # noqa: B008
     ):
         super().__init__(
             prefix=prefix,

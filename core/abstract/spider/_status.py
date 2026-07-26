@@ -1,5 +1,5 @@
 import asyncio
-from typing import Generic, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from .schema import MiddlewareInfoResult, _BasePagination
 
@@ -47,8 +47,7 @@ class SpiderParsingStatus(Generic[_T]):
         if isinstance(result, MiddlewareInfoResult):
             result = result.pagination
 
-        if self.current_page < result.current_page:
-            self.current_page = result.current_page
+        self.current_page = max(self.current_page, result.current_page)
 
         if self.total_page != result.total_page:
             self.total_page = result.total_page

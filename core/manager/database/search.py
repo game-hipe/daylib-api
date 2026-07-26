@@ -1,21 +1,21 @@
-import math
 import asyncio
+import math
 
+from sqlalchemy import Select, and_, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import Select, exists, select, or_, and_, func
 
-from ._db import _BaseManager
 from ...entitie import (
-    Content,
-    PaginationSchema,
-    ContentTag,
-    Field,
-    GetContent,
-    DataField,
-    FieldTag,
     ConnnectionFC,
+    Content,
+    ContentTag,
+    DataField,
+    Field,
+    FieldTag,
+    GetContent,
+    PaginationSchema,
 )
+from ._db import _BaseManager
 
 
 class SearchManager(_BaseManager):
@@ -173,7 +173,7 @@ class SearchManager(_BaseManager):
 
         for tag_name, field_names in fields.items():
 
-            def make_subquery(values):
+            def make_subquery(values, _tag=tag_name):
                 return (
                     select(1)
                     .select_from(ConnnectionFC)
@@ -181,7 +181,7 @@ class SearchManager(_BaseManager):
                     .join(FieldTag, FieldTag.id == Field.tag_id)
                     .where(
                         ConnnectionFC.content_id == Content.id,
-                        FieldTag.name == tag_name,
+                        FieldTag.name == _tag,
                         Field.name.in_(values),
                     )
                 )

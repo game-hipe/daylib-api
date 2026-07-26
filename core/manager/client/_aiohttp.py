@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from aiohttp import ClientSession, ClientResponse
+from aiohttp import ClientResponse, ClientSession
 
 from ...abstract.client import BaseClient
 from ...exception import StatusCodeException

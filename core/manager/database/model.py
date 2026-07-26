@@ -1,26 +1,27 @@
-from typing import Literal, TypeVar, AsyncGenerator, overload
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Literal, TypeVar, overload
 
 from loguru import logger
 from pydantic import HttpUrl
+from sqlalchemy import ColumnExpressionArgument, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
-from sqlalchemy import ColumnExpressionArgument, exists, func, select
 from sqlalchemy.sql._typing import _ColumnExpressionArgument
 
-from ._db import _BaseManager
 from ...entitie import (
     AddContent,
-    GetContent,
+    Base,
+    ChangeSchema,
     Content,
     ContentTag,
-    FieldTag,
-    Field,
     DataField,
-    ChangeSchema,
-    Base,
+    Field,
+    FieldTag,
+    GetContent,
 )
 from ...entitie.model import _BaseTag
+from ._db import _BaseManager
 
 _T = TypeVar("_T", bound=_BaseTag)
 ModelType = TypeVar("ModelType", bound=Base)
@@ -83,7 +84,7 @@ class ModelManager(_BaseManager):
             GetContent: Обьект данных из БД
         """
         logger.debug(
-            f"Попытка добавить обьект в БД (title={content.title}, url={str(content.url)})",
+            f"Попытка добавить обьект в БД (title={content.title}, url={content.url!s})",
             extra={"content": content.model_dump(mode="json")},
         )
         try:
@@ -152,7 +153,7 @@ class ModelManager(_BaseManager):
 
         except Exception as e:
             logger.exception(
-                f"Ошибка во время добавление данных в БД ( (title={content.title}, url={str(content.url)}, exception={e!r})",
+                f"Ошибка во время добавление данных в БД ( (title={content.title}, url={content.url!s}, exception={e!r})",
                 extra={"content": content.model_dump(mode="json"), "exception": str(e)},
             )
             raise
@@ -183,7 +184,7 @@ class ModelManager(_BaseManager):
                         fields=self._get_fields(content),
                     )
                     logger.info(
-                        f"Данные успешно получены (mode={mode}, value={value!r}, title={get_content.title}, url={str(get_content.url)}, id={get_content.id})",
+                        f"Данные успешно получены (mode={mode}, value={value!r}, title={get_content.title}, url={get_content.url!s}, id={get_content.id})",
                         extra={
                             "mode": mode,
                             "value": value,
@@ -222,7 +223,7 @@ class ModelManager(_BaseManager):
             GetContent: Обьект данных из БД
         """
         logger.debug(
-            f"Попытка изменить объект (mode={mode}, value={value!r}, title={change.title}, url={str(change.url)})",
+            f"Попытка изменить объект (mode={mode}, value={value!r}, title={change.title}, url={change.url!s})",
             extra={
                 "mode": mode,
                 "value": value,
@@ -323,7 +324,7 @@ class ModelManager(_BaseManager):
                     fields=field_result,
                 )
                 logger.info(
-                    f"Объект успешно изменён (mode={mode}, value={value!r}, title={get_content.title}, url={str(get_content.url)}, id={get_content.id}))",
+                    f"Объект успешно изменён (mode={mode}, value={value!r}, title={get_content.title}, url={get_content.url!s}, id={get_content.id}))",
                     extra={
                         "mode": mode,
                         "value": value,
@@ -402,7 +403,7 @@ class ModelManager(_BaseManager):
             )
             raise
 
-    async def random_content(self, tag: str | None = None) -> GetContent:
+    async def random_content(self, tag: str | None = None) -> GetContent | None:
         """Получить рандомный контент
 
         Args:
@@ -427,9 +428,7 @@ class ModelManager(_BaseManager):
                 content = await session.scalar(base_stmt)
 
                 if not content:
-                    raise ValueError(
-                        "БД пуста `ಠ_ಠ` серьёзно?"  # NOTE: Шуточная ошибка, поменять на более информативную
-                    )
+                    return None
 
                 return GetContent(
                     id=content.id,

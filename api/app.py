@@ -1,31 +1,39 @@
-import asyncio
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+import asyncio
 from datetime import datetime, timedelta, timezone
+from typing import TYPE_CHECKING, Annotated, Any, Literal
 
 import jwt
-
-from fastapi import FastAPI, APIRouter, Request, Depends, Query, Body, status
-from fastapi import HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, HttpUrl
 from argon2 import PasswordHasher
-from jwt.exceptions import InvalidTokenError
 from argon2.exceptions import VerifyMismatchError
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Query,
+    Request,
+    status,
+)
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jwt.exceptions import InvalidTokenError
+from pydantic import BaseModel, HttpUrl
 
 if TYPE_CHECKING:
+    from core.manager.alert import AlertManager
     from core.manager.database import ModelManager, SearchManager
     from core.manager.spider import SpiderManager
-    from core.manager.alert import AlertManager
 
-from core.entitie.schema import GetContent, PaginationSchema
-from core.config import setting
 from core import __version__
+from core.config import setting
+from core.entitie.schema import GetContent, PaginationSchema
 
-from .utils import pagination
-from .endpoint.manga import MangaAPI
 from .endpoint.hentai import HentaiAPI
+from .endpoint.manga import MangaAPI
 from .endpoint.spider import SpiderAPI
+from .utils import pagination
 
 
 class CustomOuat2Password(OAuth2PasswordBearer):
@@ -111,59 +119,79 @@ class ContentAPI:
         self.app.add_api_route("/health", self.health, methods=["GET"], tags=["system"])
 
     async def get_content_by_id(
-        self, id: int = Query(description="Уникальный ID в БД")
+        self,
+        *,
+        id: Annotated[int, Query(description="Уникальный ID в БД")],
     ) -> GetContent:
-        """Получить обьект с помошью ID"""
+        """Получить объект с помощью ID"""
         content = await self.model.get_content(mode="id", value=id)
         if content is None:
             raise HTTPException(
-                status_code=404, detail=f"Контент с ID `{id}`, не найдено."
+                status_code=404, detail=f"Контент с ID `{id}` не найден."
             )
-
         return content
 
     async def get_content_by_url(
-        self, url: HttpUrl = Query(description="URL для обьекта который находится в БД")
+        self,
+        *,
+        url: Annotated[
+            HttpUrl, Query(description="URL для объекта, который находится в БД")
+        ],
     ) -> GetContent:
-        """Получить обьект с помошью URL"""
+        """Получить объект с помощью URL"""
         content = await self.model.get_content(mode="url", value=str(url))
         if content is None:
             raise HTTPException(
-                status_code=404, detail=f"Контент с URL `{url}`, не найдено."
+                status_code=404, detail=f"Контент с URL `{url}` не найден."
             )
-
         return content
 
     async def get_random_content(
         self,
-        tag: str | None = Query(
-            None, description="Тэг в котором исключительно будет поиск"
-        ),
+        *,
+        tag: Annotated[
+            str | None, Query(description="Тэг, в котором исключительно будет поиск")
+        ] = None,
     ) -> GetContent:
-        """Получить рандмоный контент из БД"""
-        return await self.model.random_content(tag)
+        """Получить случайный контент из БД"""
+        content = await self.model.random_content(tag)
+        if content is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Не найден ни один объект, подходящий по условиям",
+            )
+        return content
 
     async def search_content_by_field(
         self,
-        field: str = Query(description="Название заполнение пример: `genre`"),
-        value: str | list[str] = Body(
-            description="Значение заполнение пример: `Драма`"
-        ),
-        pgnt: dict[str, Any] = Depends(pagination),
+        *,
+        field: Annotated[
+            str, Query(description="Название заполнения, пример: `genre`")
+        ],
+        value: Annotated[
+            str | list[str],
+            Body(description="Значение заполнения, пример: `Драма`"),
+        ],
+        pgnt: Annotated[dict[str, Any], Depends(pagination)],
     ) -> PaginationSchema:
-        """Искать с помошью заполнение"""
+        """Искать с помощью заполнения"""
         return await self.search.search_by_field(field=field, value=value, **pgnt)
 
     async def search_content_by_fields(
         self,
-        fields: dict[str, list[str]] = Body(description="Заполнение для поиска"),
-        strict_mode: bool = Query(
-            True,
-            description="Строгий режим ищет только те произведение у которых есть все заполнение.",
-        ),
-        pgnt: dict[str, Any] = Depends(pagination),
+        *,
+        fields: Annotated[
+            dict[str, list[str]], Body(description="Заполнение для поиска")
+        ],
+        strict_mode: Annotated[
+            bool,
+            Query(
+                description="Строгий режим ищет только те произведения, у которых есть все заполнения.",
+            ),
+        ] = True,
+        pgnt: Annotated[dict[str, Any], Depends(pagination)],
     ) -> PaginationSchema:
-        """Искать с помошью заполнений пример данных
+        """Искать с помощью заполнений, пример данных
 
         Examples:
             {
@@ -183,21 +211,31 @@ class ContentAPI:
 
     async def search_content_by_text(
         self,
-        text: str = Query(
-            description="Текст для поиска, который находится либо в описании либо в названии"
-        ),
-        pgnt: dict[str, Any] = Depends(pagination),
+        *,
+        text: Annotated[
+            str,
+            Query(
+                description="Текст для поиска, который находится либо в описании, либо в названии"
+            ),
+        ],
+        pgnt: Annotated[dict[str, Any], Depends(pagination)],
     ) -> PaginationSchema:
         """Искать по названию"""
         return await self.search.search_by_title(text=text, **pgnt)
 
     async def search_content_all(
-        self, pgnt: dict[str, Any] = Depends(pagination)
+        self,
+        *,
+        pgnt: Annotated[dict[str, Any], Depends(pagination)],
     ) -> PaginationSchema:
         """Пагинация по всей БД, без особых значений"""
         return await self.search.search(**pgnt)
 
-    async def admin_depends(self, token: str = Depends(oauth2_scheme)):
+    async def admin_depends(
+        self,
+        *,
+        token: Annotated[str, Depends(oauth2_scheme)],
+    ) -> dict[str, str]:
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Не удалось проверить учетные данные.",
@@ -210,13 +248,14 @@ class ContentAPI:
             return jwt.decode(
                 token, self.config.secret_key, algorithms=[self.config.algorithm]
             )
-
         except InvalidTokenError:
             raise credentials_exception
 
     async def login(
-        self, form_data: OAuth2PasswordRequestForm = Depends()
-    ) -> Token:  # NOTE: На будущее, что-бы можно было добавить больше админов
+        self,
+        *,
+        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    ) -> Token:  # NOTE: На будущее, чтобы можно было добавить больше админов
         if form_data.username != self.__username:
             raise HTTPException(status_code=400, detail="Неправильный логин или пароль")
 
@@ -233,7 +272,9 @@ class ContentAPI:
                 status_code=400, detail="Incorrect username or password"
             )
 
-    def create_access_token(self, data: dict, expires_delta: timedelta | None = None):
+    def create_access_token(
+        self, data: dict[str, Any], expires_delta: timedelta | None = None
+    ) -> str:
         to_encode = data.copy()
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
@@ -246,10 +287,10 @@ class ContentAPI:
         )
         return encoded_jwt
 
-    async def health(self):
+    async def health(self) -> dict[str, Any]:
         return {
             "status": "ok",
             "version": __version__,
             "service": "API",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }

@@ -1,8 +1,9 @@
 from fastapi import HTTPException
 from sqlalchemy import select
 
+from core.spider.manga.model import Chapter, ChapterSchema
+
 from ..base import BaseAPI
-from core.spider.manga.model import ChapterSchema, Chapter
 
 
 class MangaAPI(BaseAPI):

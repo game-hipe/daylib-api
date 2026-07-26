@@ -4,8 +4,9 @@ from pathlib import Path
 from fastapi import HTTPException
 from sqlalchemy import select
 
+from core.spider.hentai.model import HentaiReadyVideo, HentaiVideo
+
 from ..base import BaseAPI
-from core.spider.hentai.model import HentaiVideo, HentaiReadyVideo
 
 
 class HentaiAPI(BaseAPI):
@@ -31,7 +32,7 @@ class HentaiAPI(BaseAPI):
                     detail=f"Серия видео с content_id = {content_id} не найден.",
                 )
 
-            return list(self.hentai_fix(x.model_dump()) for x in metadata)
+            return [self.hentai_fix(x.model_dump()) for x in metadata]
 
     async def get_episode_metadata(
         self, content_id: int, episode: int, dub: str

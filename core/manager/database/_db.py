@@ -1,10 +1,11 @@
+from collections import defaultdict
 from contextlib import asynccontextmanager
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
-from collections import defaultdict
-from ...entitie import Content, Field, DataField
-from ...entitie.model import FieldTag, ContentTag
+from ...entitie import Content, DataField, Field
+from ...entitie.model import ContentTag, FieldTag
 
 __all__ = ["_BaseManager"]
 
@@ -21,9 +22,8 @@ class _BaseManager:
 
     @asynccontextmanager
     async def begin(self):
-        async with self._session() as session:
-            async with session.begin():
-                yield session
+        async with self._session() as session, session.begin():
+            yield session
 
     @staticmethod
     def _get_fields(info: list[Field] | Content) -> dict[str, list[DataField]]:

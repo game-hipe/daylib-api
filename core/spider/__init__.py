@@ -1,4 +1,4 @@
-from .manga.multi_manga.spider import MultiMangaSpider
 from .hentai.anihide.spider import AniHideSpider
+from .manga.multi_manga.spider import MultiMangaSpider
 
-__all__ = ["MultiMangaSpider", "AniHideSpider"]
+__all__ = ["AniHideSpider", "MultiMangaSpider"]

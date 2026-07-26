@@ -1,29 +1,28 @@
-import sys
-import asyncio
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, AsyncGenerator, Any
+import asyncio
+import sys
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from importlib import import_module
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy.ext.asyncio import create_async_engine
 from celery.contrib.abortable import AbortableTask
-from redis.asyncio import Redis
 from loguru import logger
+from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import create_async_engine
 
 if TYPE_CHECKING:
     from ...abstract.client import BaseClient
-    from ...abstract.spider import BaseSpider
-    from ...abstract.spider import SpiderParsingStatus
+    from ...abstract.spider import BaseSpider, SpiderParsingStatus
 
-from ...config import setting
-from ..._celery import load_celery
-from ._load import load_spider
-from ..database.model import ModelManager
 from ...abstract.alert import BaseAlert
+from ...celery import app
+from ...config import setting
 from ..alert import AlertManager
-
-app = load_celery("spiders")
+from ..database.model import ModelManager
+from ._load import load_spider
 
 engine = create_async_engine(setting.database_url_async)
 model = ModelManager(engine)
@@ -204,7 +203,7 @@ class Worker:
     @staticmethod
     @app.task(bind=True, base=AbortableTask)
     def start_spiders(
-        self: AbortableTask,
+        self: AbortableTask,  # noqa: PLW0211
         spiders: list[str],
         clients: list[str],
         spider_snapshot: dict[str, dict],
@@ -234,7 +233,7 @@ class Worker:
         log_dir.mkdir(parents=True, exist_ok=True)
 
         level = level or "INFO"
-        json_file = log_dir / ".celery_log.json"
+        json_file = log_dir / ".spider_log.json"
 
         logger.remove()
         logger.add(sys.stdout, level=level)
@@ -286,28 +285,28 @@ class Worker:
         general_kwargs = general_kwargs or {}
         general_kwargs |= {"alert": AlertManager(alert)}
 
-        async with Redis.from_url(setting.backend) as redis:
-            async with Worker._load_spdiders(
+        async with (
+            Redis.from_url(setting.backend) as redis,
+            Worker._load_spdiders(
                 spiders=spiders,
                 clients=clients,
                 extra_kwargs=extra_kwargs,
                 general_kwargs=general_kwargs,
                 client_kwargs=client_kwargs,
-            ) as aviable_spiders:
-                spider_staus: list[SpiderParsingStatus[BaseSpider]] = []
+            ) as aviable_spiders,
+        ):
+            spider_staus: list[SpiderParsingStatus[BaseSpider]] = []
 
-                for spider in aviable_spiders:
-                    spider_staus.append(
-                        await spider.start_parsing(
-                            model, **spider_snapshot.get(spider.name(), {})
-                        )
+            for spider in aviable_spiders:
+                spider_staus.append(
+                    await spider.start_parsing(
+                        model, **spider_snapshot.get(spider.name(), {})
                     )
-
-                return await Worker._start_spiders(
-                    task=task,
-                    status_dict={
-                        status.spider.name(): status for status in spider_staus
-                    },
-                    alert=alert,
-                    redis=redis,
                 )
+
+            return await Worker._start_spiders(
+                task=task,
+                status_dict={status.spider.name(): status for status in spider_staus},
+                alert=alert,
+                redis=redis,
+            )

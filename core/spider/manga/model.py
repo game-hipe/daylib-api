@@ -1,8 +1,8 @@
-from typing import overload, TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
-from pydantic import BaseModel, HttpUrl, Field
-from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
+from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import JSON, ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, backref, mapped_column, relationship
 
 from ...entitie.model import Base, Content
 

@@ -1,13 +1,12 @@
 from typing import TYPE_CHECKING, Any, overload
 
+from sqlalchemy import JSON, ForeignKey, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import JSON, Text, String, ForeignKey
-
 
 MAX_URL_LENTGH = 2083
 
 
-__all__ = ["Base", "ContentTag", "FieldTag", "ConnnectionFC", "Field", "Content"]
+__all__ = ["Base", "ConnnectionFC", "Content", "ContentTag", "Field", "FieldTag"]
 
 
 class Base(DeclarativeBase):

@@ -1,6 +1,6 @@
 from fastapi.websockets import WebSocket, WebSocketState
 
-from core.abstract.alert import BaseAlert, LEVEL
+from core.abstract.alert import LEVEL, BaseAlert
 
 
 class AdminAlert(BaseAlert):
@@ -18,7 +18,7 @@ class AdminAlert(BaseAlert):
             )
             return True
 
-        except Exception:
+        except RuntimeError:
             return False
 
     def is_closed(self):

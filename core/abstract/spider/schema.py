@@ -1,10 +1,9 @@
-from typing import TypeVar, Generic
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field, computed_field
 
+from ...entitie.schema import AddContent, GetContent, PreviewContent, _FieldContent
 from ...manager.database.model import _FastConnection
-from ...entitie.schema import PreviewContent
-from ...entitie.schema import AddContent, GetContent, _FieldContent
 
 _T = TypeVar("_T")
 _C = TypeVar("_C", bound=_FieldContent)

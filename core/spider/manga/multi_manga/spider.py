@@ -5,7 +5,7 @@ from ..base import BaseMangaSpider
 class MultiMangaSpider(BaseMangaSpider[AiohttpClient]):
     BASE_URL = "https://multi-manga.com"
     BASE_TAG = "manga"
-    FIELDS_MAP = {"Теги": "genre", "Автор": "author", "Язык": "language"}
+    FIELDS_MAP = {"Теги": "genre", "Автор": "author", "Язык": "language"}  # noqa: RUF012
 
     async def get_page(self, page, **kwargs):
         async with self.client.request(

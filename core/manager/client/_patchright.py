@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from patchright.async_api import Browser, Page, BrowserContext, async_playwright
+from patchright.async_api import Browser, BrowserContext, Page, async_playwright
 
 from ...abstract.client import BaseClient
 from ...exception import StatusCodeException
@@ -18,20 +18,18 @@ class PatchrightClient(BaseClient[Browser, Page]):
             page = await context.new_page()
 
             response = await page.goto(url, **kwargs)
-            if response is not None:
-                if not response.ok and raise_for_status:
-                    raise StatusCodeException(
-                        url=url,
-                        status=response.status,
-                        client=self,
-                    )
+            if response is not None and not response.ok and raise_for_status:
+                raise StatusCodeException(
+                    url=url,
+                    status=response.status,
+                    client=self,
+                )
 
             yield page
 
         finally:
-            if context is not None:
-                if not context.is_closed():
-                    await context.close()
+            if context is not None and not context.is_closed():
+                await context.close()
 
     @classmethod
     async def load(cls, config=None, **kwargs):

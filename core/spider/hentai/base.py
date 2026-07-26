@@ -5,25 +5,23 @@ from typing import Any, Generic, overload
 
 import aiofiles
 import m3u8
-
 from loguru import logger
 
-from ...config import setting
-from ...manager.client import AiohttpClient
-from ...abstract.spider import BaseSpider
-from ...abstract.spider import SpiderMiddleware
+from ...abstract.spider import BaseSpider, SpiderMiddleware
 from ...abstract.spider.spider import _C
+from ...config import setting
 from ...exception import MaxAttemtException
-from .model import HentaiVideoSchema, Hentai, HentaiVideo, HentaiReadyVideo
+from ...manager.client import AiohttpClient
 from ...tasks.video import (
-    process_fragments,
-    process_video,
-    create_thumbanil,
-    create_m3u8,
     DEFAULT_FRAGMENT_PATH,
     DEFAULT_M3U8_NAME,
     DEFAULT_VIDEO_NAME,
+    create_m3u8,
+    create_thumbanil,
+    process_fragments,
+    process_video,
 )
+from .model import Hentai, HentaiReadyVideo, HentaiVideo, HentaiVideoSchema
 
 
 class BaseHentaiMiddleware(
@@ -37,65 +35,66 @@ class BaseHentaiMiddleware(
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
     async def _process_result(self, result):
-        if result.extra_kwargs:
-            if (
-                not await result.connection.obj_in_database(
-                    Hentai, Hentai.content_id == result.content.id
-                )
-                or result.start_config.update
-            ):
-                hentai = Hentai(content_id=result.content.id)
+        if not result.extra_kwargs:
+            return result
 
-                for video in result.extra_kwargs:
-                    try:
-                        if not video.use_custom:
-                            hentai_video = await self._process_video(video)
+        if (
+            not await result.connection.obj_in_database(
+                Hentai, Hentai.content_id == result.content.id
+            )
+            or result.start_config.update
+        ):
+            hentai = Hentai(content_id=result.content.id)
 
-                        else:
-                            hentai_video = await self.spider.process_video(video)
+            for video in result.extra_kwargs:
+                try:
+                    if not video.use_custom:
+                        hentai_video = await self._process_video(video)
+                    else:
+                        hentai_video = await self.spider.process_video(video)
 
-                    except MaxAttemtException as e:
-                        logger.error(
-                            f"Не удалось получить видео (url={str(video.video_url or video.m3u8_url)!r}, message={e.message!r})",
-                            extra={
-                                "hentai_url": str(result.content.url),
-                                "video": video.model_dump(mode="json"),
-                                "client_message": e.message,
-                            },
-                        )
-                        continue
-
-                    except Exception:
-                        logger.exception(
-                            "Ошибка во время обработки видео",
-                            extra={
-                                "hentai_url": str(result.content.url),
-                                "video": video.model_dump(mode="json"),
-                            },
-                        )
-                        raise
-
-                    hentai.videos.append(
-                        HentaiVideo(
-                            hentai_id=result.content.id,
-                            video_path=hentai_video.video_path,
-                            m3u8_path=hentai_video.m3u8_path,
-                            thumbanil_path=hentai_video.thumbanil_path,
-                            title=video.title,
-                            episode=video.episode,
-                            dub=video.dub,
-                            other=video.other,
-                        )
+                except MaxAttemtException as e:
+                    logger.error(
+                        f"Не удалось получить видео (url={str(video.video_url or video.m3u8_url)!r}, message={e.message!r})",
+                        extra={
+                            "hentai_url": str(result.content.url),
+                            "video": video.model_dump(mode="json"),
+                            "client_message": e.message,
+                        },
                     )
+                    continue
 
-                result.connection.session.add(hentai)
-                await result.connection.session.commit()
+                except Exception:
+                    logger.exception(
+                        "Ошибка во время обработки видео",
+                        extra={
+                            "hentai_url": str(result.content.url),
+                            "video": video.model_dump(mode="json"),
+                        },
+                    )
+                    raise
+
+                hentai.videos.append(
+                    HentaiVideo(
+                        hentai_id=result.content.id,
+                        video_path=hentai_video.video_path,
+                        m3u8_path=hentai_video.m3u8_path,
+                        thumbanil_path=hentai_video.thumbanil_path,
+                        title=video.title,
+                        episode=video.episode,
+                        dub=video.dub,
+                        other=video.other,
+                    )
+                )
+
+            result.connection.session.add(hentai)
+            await result.connection.session.commit()
 
         return result
 
     async def _handle_error(self, exception):
         logger.exception(f"Ошибка во время попытки добавить хентай: {exception}")
-        raise
+        raise  # noqa: PLE0704
 
     async def _process_video(self, video: HentaiVideoSchema) -> HentaiReadyVideo:
         """Обработать видео и подготовить его метаданные."""

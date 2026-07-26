@@ -15,7 +15,7 @@ from ...abstract.spider import SpiderMiddleware
 from ...abstract.spider.spider import _C
 from ...exception import MaxAttemtException
 from .model import HentaiVideoSchema, Hentai, HentaiVideo, HentaiReadyVideo
-from ._task import (
+from ...tasks.video import (
     process_fragments,
     process_video,
     create_thumbanil,

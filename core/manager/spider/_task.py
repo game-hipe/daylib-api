@@ -208,9 +208,7 @@ class TaskManager:
 
         logger.debug(f"Запуск паука: {name}")
         if existing and existing.state in ACTIVE_STATES:
-            logger.info(
-                f"Отмена паука перед повторным запуском: {name}"
-            )
+            logger.info(f"Отмена паука перед повторным запуском: {name}")
             await self.stop_task(name)
 
         start_kwargs = {

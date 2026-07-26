@@ -68,7 +68,6 @@ services:
     env_file:
       - ".env"
 
-
   spider_celery:
     build: .
     container_name: "app-celery-spider"
@@ -84,12 +83,12 @@ services:
       redis:
         condition: service_healthy
 
-
   ffmpeg_celery:
-    build: .
+    build: 
+      context: .
+      dockerfile: FFmpeg-Dockerfile
+
     container_name: "app-celery-ffmpeg"
-    entrypoint: ""
-    command: celery -A core.spider.hentai._task worker
 
     volumes:
       - ${VIDEO_PATH}:${VIDEO_PATH}

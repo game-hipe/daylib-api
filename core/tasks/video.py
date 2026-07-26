@@ -7,7 +7,7 @@ from celery.utils.serialization import UnpickleableExceptionWrapper
 import ffmpeg
 from loguru import logger
 
-from ..._celery import load_celery
+from .._celery import load_celery
 
 DEFAULT_FRAGMENT_PATH = "fragments"
 DEFAULT_M3U8_NAME = "index.m3u8"

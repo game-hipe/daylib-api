@@ -6,9 +6,9 @@ from typing import Literal
 from fastapi import HTTPException, Query, Body
 from fastapi.websockets import WebSocket, WebSocketDisconnect
 
-
 from ..base import BaseAPI
 from .._alert import AdminAlert
+from core.spider import __all__
 from core.manager.spider._status import SpiderStatusSnapshotSchema
 
 TaskState = Literal[
@@ -23,8 +23,7 @@ TaskState = Literal[
     "all",
 ]
 
-
-async def token_verify(token: str | None = Query(None)): ...
+Spider = Literal[*__all__]
 
 
 class SpiderAPI(BaseAPI):
@@ -42,7 +41,7 @@ class SpiderAPI(BaseAPI):
 
     async def start_spider(
         self,
-        spider: str,
+        spider: Spider,  # type: ignore
         start_page: int = Query(1, ge=1),
         pagination_kwargs: dict | None = Body(None),
         update: bool = Query(False),
@@ -58,7 +57,10 @@ class SpiderAPI(BaseAPI):
 
         return SpiderStatusSnapshotSchema.model_validate(status.to_snapshot())
 
-    async def stop_spider(self, spider: str) -> SpiderStatusSnapshotSchema:
+    async def stop_spider(
+        self,
+        spider: Spider,  # type: ignore
+    ) -> SpiderStatusSnapshotSchema:
         try:
             status = await self.content.spider.stop_spider(spider)
         except KeyError as e:
@@ -140,5 +142,5 @@ class SpiderAPI(BaseAPI):
             except ValueError:
                 pass
 
-    async def recover_spider(self, state: TaskState = "one") -> None:
+    async def recover_spider(self, state: TaskState = Query("idle")) -> None:
         await self.content.spider.recover(state)

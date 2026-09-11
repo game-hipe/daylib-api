@@ -24,7 +24,7 @@ from ..alert import AlertManager
 from ..database.model import ModelManager
 from ._load import load_spider
 
-engine = create_async_engine(setting.database_url_async)
+engine = create_async_engine(setting.database.url)
 model = ModelManager(engine)
 
 

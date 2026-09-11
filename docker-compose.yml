@@ -83,23 +83,6 @@ services:
       redis:
         condition: service_healthy
 
-  ffmpeg_celery:
-    build: 
-      context: .
-      dockerfile: FFmpeg-Dockerfile
-
-    container_name: "app-celery-ffmpeg"
-
-    volumes:
-      - ${VIDEO_PATH}:${VIDEO_PATH}
-
-    env_file:
-      - ".env"
-
-    depends_on:
-      redis:
-        condition: service_healthy
-
 
 volumes:
   postgres_data:

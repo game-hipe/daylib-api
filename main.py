@@ -18,7 +18,7 @@ load_dotenv()
 
 
 async def main():
-    engine = create_async_engine(setting.database_url_async)
+    engine = create_async_engine(setting.database.url)
     try:
         alert = AlertManager()
         async with (
@@ -35,7 +35,7 @@ async def main():
                 ),
             )
             server = Server(
-                config=Config(app=api.app, host=setting.host_api, port=setting.port_api)
+                config=Config(app=api.app, host=setting.api.host, port=setting.api.port)
             )
             await server.serve()
 

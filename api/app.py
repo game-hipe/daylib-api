@@ -34,10 +34,10 @@ from .endpoint.spider import SpiderAPI
 from .utils import pagination
 
 
-class CustomOuat2Password(OAuth2PasswordBearer):
+class CustomOAuth2PasswordBearer(OAuth2PasswordBearer):
     async def __call__(self, request: Request) -> str | Literal["Service-Pass"] | None:
         if token := request.headers.get("Service-Token-WWW"):
-            if token == setting.service_key:
+            if token == setting.security.service_key:
                 return "Service-Pass"
 
             if self.auto_error:
@@ -46,7 +46,7 @@ class CustomOuat2Password(OAuth2PasswordBearer):
         return await super().__call__(request)
 
 
-oauth2_scheme = CustomOuat2Password(tokenUrl="token")
+oauth2_scheme = CustomOAuth2PasswordBearer(tokenUrl="token")
 
 
 class Token(BaseModel):
@@ -74,8 +74,8 @@ class ContentAPI:
 
         self.config = setting
 
-        self.__username = self.config.admin_login
-        self.__hash = self.hasher.hash(self.config.admin_password)
+        self.__username = self.config.admin.login
+        self.__hash = self.hasher.hash(self.config.admin.password)
         self._init_endpoint()
 
     def _init_endpoint(self):
@@ -230,7 +230,9 @@ class ContentAPI:
 
         try:
             return jwt.decode(
-                token, self.config.secret_key, algorithms=[self.config.algorithm]
+                token,
+                self.config.security.secret_key,
+                algorithms=[self.config.security.algorithm],
             )
         except InvalidTokenError:
             raise credentials_exception
@@ -263,11 +265,15 @@ class ContentAPI:
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+            expire = datetime.now(timezone.utc) + timedelta(
+                minutes=self.config.security.access_token_expire_minutes
+            )
 
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(
-            to_encode, self.config.secret_key, algorithm=self.config.algorithm
+            to_encode,
+            self.config.security.secret_key,
+            algorithm=self.config.security.algorithm,
         )
         return encoded_jwt
 

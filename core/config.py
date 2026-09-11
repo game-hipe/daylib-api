@@ -3,29 +3,78 @@ from pydantic import Field, PostgresDsn, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):
-    broker: str
-    backend: str
+class DataBaseSettigs(BaseSettings):
+    user: str
+    password: str
+    db: str
+    host: str
+    port: int
 
-    postgres_user: str
-    postgres_password: str
-    postgres_db: str
-    postgres_host: str
-    postgres_port: int
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+        env_prefix="postgres_",
+    )
 
-    host_api: str = Field("0.0.0.0")
-    port_api: int = Field(8000)
+    @computed_field
+    @property
+    def database_url(self) -> PostgresDsn:
+        """Construct PostgreSQL connection URL from individual parameters."""
+        return PostgresDsn.build(
+            scheme="postgresql+asyncpg",
+            username=self.user,
+            password=self.password,
+            host=self.host,
+            port=self.port,
+            path=self.db,
+        )
 
-    video_path: str = "./video"
+    @computed_field
+    @property
+    def url_sync(self) -> str:
+        """Sync version of database URL (for SQLAlchemy sync engines)."""
+        return str(self.database_url).replace("postgresql+asyncpg", "postgresql")
 
-    admin_login: str
-    admin_password: str
+    @computed_field
+    @property
+    def url(self) -> str:
+        """Async version of database URL (for asyncpg)."""
+        return str(self.database_url)
 
+
+class APISettings(BaseSettings):
+    host: str = Field("0.0.0.0")
+    port: int = Field(8000)
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+        env_prefix="api_",
+    )
+
+
+class AdminSettings(BaseSettings):
+    login: str
+    password: str
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+        env_prefix="admin_",
+    )
+
+
+class SecuritySettings(BaseSettings):
     secret_key: str
-    algorithm: str
-    access_token_expire_minutes: int
-
     service_key: str
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 15
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -48,30 +97,24 @@ class Settings(BaseSettings):
 
         return self
 
-    @computed_field
-    @property
-    def database_url(self) -> PostgresDsn:
-        """Construct PostgreSQL connection URL from individual parameters."""
-        return PostgresDsn.build(
-            scheme="postgresql+asyncpg",
-            username=self.postgres_user,
-            password=self.postgres_password,
-            host=self.postgres_host,
-            port=self.postgres_port,
-            path=self.postgres_db,
-        )
 
-    @computed_field
-    @property
-    def database_url_sync(self) -> str:
-        """Sync version of database URL (for SQLAlchemy sync engines)."""
-        return str(self.database_url).replace("postgresql+asyncpg", "postgresql")
+class Settings(BaseSettings):
+    broker: str
+    backend: str
 
-    @computed_field
-    @property
-    def database_url_async(self) -> str:
-        """Async version of database URL (for asyncpg)."""
-        return str(self.database_url)
+    database: DataBaseSettigs = DataBaseSettigs()
+    api: APISettings = APISettings()
+    admin: AdminSettings = AdminSettings()
+    security: SecuritySettings = SecuritySettings()
+
+    video_path: str = "./video"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
 
 setting = Settings()

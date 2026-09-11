@@ -2,7 +2,8 @@ FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS builder
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
-    UV_NO_PROGRESS=1
+    UV_NO_PROGRESS=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/app/.playwright-browsers
 
 WORKDIR /app
 
@@ -16,12 +17,15 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
-RUN uv run patchright install chromium
+# Устанавливаем Chromium и ВСЕ его системные зависимости через patchright
+RUN uv run patchright install-deps chromium && \
+    uv run patchright install chromium
 
 FROM python:3.14.6-slim-bookworm
 
 WORKDIR /app
 
+# Устанавливаем только минимальный набор, который может понадобиться для отладки
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libnss3 \
@@ -42,10 +46,15 @@ RUN apt-get update && apt-get install -y \
     libatspi2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
+# Копируем виртуальное окружение и установленные браузеры
 COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/.playwright-browsers /app/.playwright-browsers
+
 COPY --from=builder /app /app
 
-ENV PATH="/app/.venv/bin:$PATH"
+# Устанавливаем переменные окружения
+ENV PATH="/app/.venv/bin:$PATH" \
+    PLAYWRIGHT_BROWSERS_PATH=/app/.playwright-browsers
 
 COPY entrypoint.sh .
 RUN chmod +x ./entrypoint.sh

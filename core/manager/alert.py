@@ -40,7 +40,7 @@ class AlertManager:
         try:
             success = await alert.alert(message, level)
             if not success and alert.delete:
-                self.delete_alert(alert)
+                await self.delete_alert(alert)
 
         except Exception:  # noqa: BLE001
             if alert.delete:

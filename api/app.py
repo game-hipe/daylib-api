@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Annotated, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import jwt
 from argon2 import PasswordHasher
@@ -117,7 +117,7 @@ class ContentAPI:
     async def get_content_by_id(
         self,
         *,
-        id: Annotated[int, Query(description="Уникальный ID в БД")],
+        id: int = Query(description="Уникальный ID в БД"),
     ) -> GetContent:
         """Получить объект с помощью ID"""
         content = await self.model.get_content(mode="id", value=id)
@@ -130,9 +130,7 @@ class ContentAPI:
     async def get_content_by_url(
         self,
         *,
-        url: Annotated[
-            HttpUrl, Query(description="URL для объекта, который находится в БД")
-        ],
+        url: HttpUrl = Query(description="URL для объекта, который находится в БД"),
     ) -> GetContent:
         """Получить объект с помощью URL"""
         content = await self.model.get_content(mode="url", value=str(url))
@@ -145,9 +143,9 @@ class ContentAPI:
     async def get_random_content(
         self,
         *,
-        tag: Annotated[
-            str | None, Query(description="Тэг, в котором исключительно будет поиск")
-        ] = None,
+        tag: str | None = Query(
+            None, description="Тэг, в котором исключительно будет поиск"
+        ),
     ) -> GetContent:
         """Получить случайный контент из БД"""
         content = await self.model.random_content(tag)
@@ -161,14 +159,11 @@ class ContentAPI:
     async def search_content_by_field(
         self,
         *,
-        field: Annotated[
-            str, Query(description="Название заполнения, пример: `genre`")
-        ],
-        value: Annotated[
-            str | list[str],
-            Body(description="Значение заполнения, пример: `Драма`"),
-        ],
-        pgnt: Annotated[dict[str, Any], Depends(pagination)],
+        field: str = Query(description="Название заполнения, пример: `genre`"),
+        value: str | list[str] = Body(
+            description="Значение заполнения, пример: `Драма`"
+        ),
+        pgnt: dict[str, Any] = Depends(pagination),
     ) -> PaginationSchema:
         """Искать с помощью заполнения"""
         return await self.search.search_by_field(field=field, value=value, **pgnt)
@@ -176,16 +171,12 @@ class ContentAPI:
     async def search_content_by_fields(
         self,
         *,
-        fields: Annotated[
-            dict[str, list[str]], Body(description="Заполнение для поиска")
-        ],
-        strict_mode: Annotated[
-            bool,
-            Query(
-                description="Строгий режим ищет только те произведения, у которых есть все заполнения.",
-            ),
-        ] = True,
-        pgnt: Annotated[dict[str, Any], Depends(pagination)],
+        fields: dict[str, list[str]] = Body(description="Заполнение для поиска"),
+        strict_mode: bool = Query(
+            True,
+            description="Строгий режим ищет только те произведения, у которых есть все заполнения.",
+        ),
+        pgnt: dict[str, Any] = Depends(pagination),
     ) -> PaginationSchema:
         """Искать с помощью заполнений, пример данных
 
@@ -208,13 +199,10 @@ class ContentAPI:
     async def search_content_by_text(
         self,
         *,
-        text: Annotated[
-            str,
-            Query(
-                description="Текст для поиска, который находится либо в описании, либо в названии"
-            ),
-        ],
-        pgnt: Annotated[dict[str, Any], Depends(pagination)],
+        text: str = Query(
+            description="Текст для поиска, который находится либо в описании, либо в названии"
+        ),
+        pgnt: dict[str, Any] = Depends(pagination),
     ) -> PaginationSchema:
         """Искать по названию"""
         return await self.search.search_by_title(text=text, **pgnt)
@@ -222,7 +210,7 @@ class ContentAPI:
     async def search_content_all(
         self,
         *,
-        pgnt: Annotated[dict[str, Any], Depends(pagination)],
+        pgnt: dict[str, Any] = Depends(pagination),
     ) -> PaginationSchema:
         """Пагинация по всей БД, без особых значений"""
         return await self.search.search(**pgnt)
@@ -230,7 +218,7 @@ class ContentAPI:
     async def admin_depends(
         self,
         *,
-        token: Annotated[str, Depends(oauth2_scheme)],
+        token: str = Depends(oauth2_scheme),
     ) -> dict[str, str]:
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -250,7 +238,7 @@ class ContentAPI:
     async def login(
         self,
         *,
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        form_data: OAuth2PasswordRequestForm = Depends(),
     ) -> Token:  # NOTE: На будущее, чтобы можно было добавить больше админов
         if form_data.username != self.__username:
             raise HTTPException(status_code=400, detail="Неправильный логин или пароль")

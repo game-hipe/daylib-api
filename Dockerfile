@@ -1,10 +1,26 @@
-FROM python:3.14.6-slim-bookworm
+FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS builder
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_NO_PROGRESS=1
 
 WORKDIR /app
 
-VOLUME [ "/video" ]
+COPY pyproject.toml uv.lock ./
 
-COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
+
+COPY . .
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
+
+RUN uv run patchright install chromium
+
+FROM python:3.14.6-slim-bookworm
+
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
@@ -26,12 +42,12 @@ RUN apt-get update && apt-get install -y \
     libatspi2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app /app
 
-RUN patchright install chromium
+ENV PATH="/app/.venv/bin:$PATH"
 
-COPY . .
-
+COPY entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
 
 ENTRYPOINT [ "./entrypoint.sh" ]

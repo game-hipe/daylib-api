@@ -10,7 +10,7 @@ class AdminAlert(BaseAlert):
 
     async def alert(self, message: str, level: LEVEL) -> bool:
         try:
-            if self.is_closed():
+            if self._is_closed():
                 return False
 
             await self._wb.send_json(
@@ -21,5 +21,5 @@ class AdminAlert(BaseAlert):
         except RuntimeError:
             return False
 
-    def is_closed(self):
+    def _is_closed(self):
         return self._wb.client_state == WebSocketState.DISCONNECTED

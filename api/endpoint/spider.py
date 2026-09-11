@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Annotated, Literal
+from typing import Literal
 
 from fastapi import Body, HTTPException, Query
 from fastapi.websockets import WebSocket, WebSocketDisconnect
@@ -23,9 +23,7 @@ TaskState = Literal[
     "all",
 ]
 
-Spider = Literal[
-    *__all__
-]  # NOTE: По большей части просто для FastAPI а не на статическую типизацию mypy
+Spider = Literal[*__all__]  # NOTE: По большей части просто для FastAPI, а не для mypy
 
 
 class SpiderAPI(BaseAPI):
@@ -36,19 +34,16 @@ class SpiderAPI(BaseAPI):
         self.add_api_route("/stop", self.stop_spider, methods=["POST"])
         self.add_api_route("/start/all", self.start_all_spider, methods=["POST"])
         self.add_api_route("/stop/all", self.stop_all_spider, methods=["POST"])
-        self.add_api_websocket_route(
-            "/ws",
-            self.status_websocket,
-        )
+        self.add_api_websocket_route("/ws", self.status_websocket)
 
     async def start_spider(
         self,
         *,
-        spider: Annotated[Spider, Query()],  # type: ignore
-        start_page: Annotated[int, Query(1, ge=1)],
-        pagination_kwargs: Annotated[dict | None, Body(None)],
-        update: Annotated[bool, Query(False)],
-        force: Annotated[bool, Query(False)],
+        spider: Spider = Query(...),
+        start_page: int = Query(1, ge=1),
+        pagination_kwargs: dict | None = Body(None),
+        update: bool = Query(False),
+        force: bool = Query(False),
     ) -> SpiderStatusSnapshotSchema:
         status = await self.content.spider.start_spider(
             spider=spider,
@@ -57,13 +52,12 @@ class SpiderAPI(BaseAPI):
             update=update,
             force=force,
         )
-
         return SpiderStatusSnapshotSchema.model_validate(status.to_snapshot())
 
     async def stop_spider(
         self,
         *,
-        spider: Annotated[Spider, Query()],  # type: ignore
+        spider: Spider = Query(...),
     ) -> SpiderStatusSnapshotSchema:
         try:
             status = await self.content.spider.stop_spider(spider)
@@ -92,27 +86,27 @@ class SpiderAPI(BaseAPI):
         ]
 
     async def status_websocket(self, websocket: WebSocket) -> None:
-        websocket.close()
         await websocket.accept()
+        await websocket.close()
 
         alert = AdminAlert(websocket, True)
         await self.content.alert.add_alert(alert)
 
         async def send_status():
             last_hash: int | None = None
-            stop: bool = False
+            stop = False
 
             while True:
                 try:
-                    snaphots = [
+                    snapshots = [
                         x.model_dump(mode="json", exclude=["created_at", "updated_at"])
                         for x in await self.get_status()
                     ]
-                    current_hash = hash(json.dumps(snaphots))
+                    current_hash = hash(json.dumps(snapshots))
 
                     if current_hash != last_hash:
                         await websocket.send_json(
-                            {"signal": "spider", "result": snaphots}
+                            {"signal": "spider", "result": snapshots}
                         )
                         last_hash = current_hash
 
@@ -130,16 +124,13 @@ class SpiderAPI(BaseAPI):
                     if stop:
                         try:
                             await websocket.close()
-
                         except RuntimeError:
                             pass
 
         try:
             await send_status()
-
         except RuntimeError:
             pass
-
         finally:
             try:
                 await self.content.alert.delete_alert(alert)
@@ -147,6 +138,8 @@ class SpiderAPI(BaseAPI):
                 pass
 
     async def recover_spider(
-        self, *, state: Annotated[TaskState, Query("idle")]
+        self,
+        *,
+        state: TaskState = Query("idle", description="Состояние задачи"),
     ) -> None:
         await self.content.spider.recover(state)

@@ -32,7 +32,7 @@ class ClientException(_BaseException):
 
     ERROR_TEXT = "Неизвестная ошибка связанная с клиентом"
 
-    def __init__(self, client: "BaseClient", *args):
+    def __init__(self, client: BaseClient, *args):
         super().__init__(*args)
         self.client = client
 
@@ -42,7 +42,7 @@ class RequestException(ClientException):
 
     ERROR_TEXT = "Ошибка во время запроса"
 
-    def __init__(self, url: str, client: "BaseClient", *args):
+    def __init__(self, url: str, client: BaseClient, *args):
         super().__init__(client, *args)
         self.url = url
 
@@ -52,7 +52,7 @@ class ResponseException(ClientException):
 
     ERROR_TEXT = "Ошибка в ответе запроса"
 
-    def __init__(self, url: str, status: int, client: "BaseClient", *args):
+    def __init__(self, url: str, status: int, client: BaseClient, *args):
         super().__init__(client, *args)
         self.url = url
         self.status = status
@@ -69,7 +69,7 @@ class MaxAttemtException(RequestException):
 
     ERROR_TEXT = "Максимальное количество попыток исчерпано"
 
-    def __init__(self, url: str, max_try: int, client: "BaseClient", *args):
+    def __init__(self, url: str, max_try: int, client: BaseClient, *args):
         super().__init__(url, client, *args)
         self.max_try = max_try
 

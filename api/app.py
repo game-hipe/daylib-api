@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any, Literal
 
 import jwt
@@ -263,9 +263,9 @@ class ContentAPI:
     ) -> str:
         to_encode = data.copy()
         if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
+            expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(
+            expire = datetime.now(UTC) + timedelta(
                 minutes=self.config.security.access_token_expire_minutes
             )
 
@@ -282,5 +282,5 @@ class ContentAPI:
             "status": "ok",
             "version": __version__,
             "service": "API",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }

@@ -43,8 +43,7 @@ BASE_URL = "https://example.com"
 Базовый URL к сайту, данный параметр обязателен если во время инициализации не был указан `abstract = True`.
 
 ```python
-async def get_page(self, page, **kwargs) -> Pagination: 
-    ...
+async def get_page(self, page, **kwargs) -> Pagination: ...
 ```
 Функция для пагинации, главная необходимость получать определённую страницу.
 - page - номер страницы к которой нужно обращаться
@@ -53,8 +52,7 @@ async def get_page(self, page, **kwargs) -> Pagination:
 Возращаемый тип данных [Pagination](../core/abstract/spider/schema.py)
 
 ```python
-async def get_info(self, url, **kwargs) -> GetInfoResult[_R] | AddContent | None:
-    ...
+async def get_info(self, url, **kwargs) -> GetInfoResult[_R] | AddContent | None: ...
 ```
 Функция для получение основных данных, при возвращении None, [Middleware](../core/abstract/spider/middleware.py) будет пропускать мимо себя. При получении GetInfoResult, будет передан дальше по конвейеру при получениее AddContent будет обёрнут в GetInfoResult для единобразие.
 - url - страница с данными, для парсинга
@@ -62,7 +60,7 @@ async def get_info(self, url, **kwargs) -> GetInfoResult[_R] | AddContent | None
 
 Разберём мною указанный `abstract`, в начале этого гайда.
 ```python
-class Example(BaseSpider[AiohttpClient, CustomDict], abstract = True):
+class Example(BaseSpider[AiohttpClient, CustomDict], abstract=True):
     BASE_TAG = "images"
     # BASE_URL = "https://example.com"
 ```

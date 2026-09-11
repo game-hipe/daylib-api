@@ -34,7 +34,7 @@ class _BasePagination(BaseModel):
 
 
 class Pagination(_BasePagination):
-    items: list["PreviewContent"]
+    items: list[PreviewContent]
 
 
 class _BaseInfoResult(BaseModel, Generic[_C, _T]):

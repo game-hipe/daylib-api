@@ -29,12 +29,12 @@ class _BaseTag(Base):
 class ContentTag(_BaseTag):
     __tablename__ = "content_tag"
 
-    content: Mapped[list["Content"]] = relationship("Content", back_populates="tag")
+    content: Mapped[list[Content]] = relationship("Content", back_populates="tag")
 
 
 class FieldTag(_BaseTag):
     __tablename__ = "field_tag"
-    field: Mapped[list["Field"]] = relationship("Field", back_populates="tag")
+    field: Mapped[list[Field]] = relationship("Field", back_populates="tag")
 
 
 class ConnnectionFC(Base):
@@ -59,7 +59,7 @@ class Field(Base):
 
     tag: Mapped[FieldTag] = relationship("FieldTag", back_populates="field")
 
-    content: Mapped[list["Content"]] = relationship(
+    content: Mapped[list[Content]] = relationship(
         "Content", secondary=ConnnectionFC.__table__, back_populates="fields"
     )
 

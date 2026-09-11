@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 _T = TypeVar("_T", bound="BaseSpider")
 
 
-async def wait_task(tasks: list["SpiderParsingStatus"]):
+async def wait_task(tasks: list[SpiderParsingStatus]):
     await asyncio.gather(*[task.wait_for_end() for task in tasks])
 
 

@@ -19,7 +19,7 @@ _R = TypeVar("_R")
 class ClientResponse:
     url: str
     attempt: int
-    client: "BaseClient"
+    client: BaseClient
     error: ClientException | None = None
 
 

@@ -1,5 +1,5 @@
-from ..share import BaseSpider
 from ...manager.client import AiohttpClient
+from ..share import BaseSpider
 
 
 class ExampleSpider(BaseSpider[AiohttpClient, dict]):

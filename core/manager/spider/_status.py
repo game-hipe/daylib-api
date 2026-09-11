@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from asyncio import Task
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal, Self, TypedDict
 
 from celery.result import AsyncResult
@@ -47,8 +47,8 @@ class SpiderStatusSnapshotSchema(BaseModel):
     is_end: bool = False
     error: str | None = None
     task_id: str = ""
-    created_at: str = datetime.now(timezone.utc).isoformat()
-    updated_at: str = datetime.now(timezone.utc).isoformat()
+    created_at: str = datetime.now(UTC).isoformat()
+    updated_at: str = datetime.now(UTC).isoformat()
 
 
 @dataclass
@@ -106,7 +106,7 @@ class SpiderStatus:
         if is_end is not None:
             self._is_end = is_end
 
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
         if self.state in END_STATES or self.is_end:
             self.end.set()
 
@@ -119,7 +119,7 @@ class SpiderStatus:
         """
         self.state = state
         self.error = error
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
         if self.state in END_STATES:
             self.end.set()
 

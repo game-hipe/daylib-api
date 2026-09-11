@@ -91,6 +91,7 @@ class Worker:
 
             status_dict[spider_name].task.cancel()
             status_dict.pop(spider_name)
+            await redis.delete("spider:stop")
 
     @staticmethod
     async def _status_sender(
@@ -157,7 +158,7 @@ class Worker:
 
     @asynccontextmanager
     @staticmethod
-    async def _load_spdiders(
+    async def _load_spiders(
         spiders: list[str],
         clients: list[str],
         extra_kwargs: dict[str, dict] | None = None,
@@ -287,7 +288,7 @@ class Worker:
 
         async with (
             Redis.from_url(setting.backend) as redis,
-            Worker._load_spdiders(
+            Worker._load_spiders(
                 spiders=spiders,
                 clients=clients,
                 extra_kwargs=extra_kwargs,

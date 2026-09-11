@@ -79,7 +79,7 @@ class SearchManager(_BaseManager):
             )
 
         return PaginationSchema(
-            current_page=1,
+            current_page=page,
             total_page=math.ceil(total / limit),
             total_items=total,
             items=items,

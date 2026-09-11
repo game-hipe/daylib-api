@@ -87,7 +87,6 @@ class SpiderAPI(BaseAPI):
 
     async def status_websocket(self, websocket: WebSocket) -> None:
         await websocket.accept()
-        await websocket.close()
 
         alert = AdminAlert(websocket, True)
         await self.content.alert.add_alert(alert)
@@ -134,6 +133,9 @@ class SpiderAPI(BaseAPI):
         finally:
             try:
                 await self.content.alert.delete_alert(alert)
+                await websocket.close()
+            except RuntimeError:
+                pass
             except ValueError:
                 pass
 

@@ -88,6 +88,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "aiosqlite>=0.22.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.15.20",
@@ -99,3 +100,5 @@ extend-exclude = ["test", "migrations", "venv", "old_code.py", "alembic"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 norecursedirs = ["data", "tmp", ".git"]
+asyncio_mode = "auto"
+testpaths = ["test"]

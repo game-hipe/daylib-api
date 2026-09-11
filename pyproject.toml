@@ -94,7 +94,7 @@ dev = [
 ]
 
 [tool.ruff]
-extend-exclude = ["migrations", "venv", "old_code.py", "alembic"]
+extend-exclude = ["test", "migrations", "venv", "old_code.py", "alembic"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

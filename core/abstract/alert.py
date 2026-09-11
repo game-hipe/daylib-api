@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Literal, TypeAlias
+from typing import Literal
 
-LEVEL: TypeAlias = Literal["debug", "info", "warning", "error"]
+type LEVEL = Literal["debug", "info", "warning", "error"]
 
 
 class BaseAlert(ABC):

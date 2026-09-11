@@ -96,6 +96,7 @@ dev = [
 
 [tool.ruff]
 extend-exclude = ["test", "migrations", "venv", "old_code.py", "alembic"]
+target-version = "py314"
 
 [tool.ruff.lint]
 ignore = ["B008"]

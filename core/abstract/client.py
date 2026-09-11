@@ -35,7 +35,7 @@ class ClientConfig(TypedDict, total=False):
     wait_func: Callable[[ClientResponse], Awaitable]
 
 
-class BaseClient(ABC, Generic[_S, _R]): # noqa: UP046
+class BaseClient(ABC, Generic[_S, _R]):
     def __init__(self, session: _S, **config: Unpack[ClientConfig]):
         """Создание клиента для запросов
 

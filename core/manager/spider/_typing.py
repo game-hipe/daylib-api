@@ -1,9 +1,9 @@
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ...abstract.spider import BaseSpider
 
 __all__ = ["SPIDER"]
 
-SPIDER: TypeAlias = "str | BaseSpider | type[BaseSpider]"
+type SPIDER = "str | BaseSpider | type[BaseSpider]"
 """Типы которые могут отдать название"""

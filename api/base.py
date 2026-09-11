@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class BaseAPI(APIRouter):
-    __endpoints: list[Self] = [] # noqa: RUF012
+    __endpoints: list[Self] = []  # noqa: RUF012
 
     TAG: str | None = None
 

@@ -53,7 +53,7 @@ class _BuildSchema(ABC, Generic[_R]):
     """Базовый URL сайта пример: `https://example.com`"""
 
     BASE_TAG: str | None = None
-    """Базовый тег для обозночение в БД пример: `manga`"""
+    """Базовый тег для обозначения в БД пример: `manga`"""
 
     def __init_subclass__(cls, abstract=False):
         super().__init_subclass__()
@@ -117,8 +117,8 @@ class _BuildSchema(ABC, Generic[_R]):
             tag (str | None, optional): Тэг контента пример: `manga`, `anime`. По умолчанию None.
             description (str | None, optional): Описание контента. По умолчанию None.
             other (Any | None, optional): Остальные параметры. По умолчанию None.
-            fields (dict[str, list[str]] | None, optional): Заполнение которые важны при поиске. По умолчанию None.
-            extra_kwargs (Any | None, optional): Дополнительные данные которые могут понадобиться в будущем
+            fields (dict[str, list[str]] | None, optional): Заполнения, которые важны при поиске. По умолчанию None.
+            extra_kwargs (Any | None, optional): Дополнительные данные, которые могут понадобиться в будущем
 
         Raises:
             ValueError: Если tag не передан и BASE_TAG не задан
@@ -153,7 +153,7 @@ class _BuildSchema(ABC, Generic[_R]):
 
         Args:
             current_page (int): Текущая страница
-            items (list[&quot;PreviewContent&quot;]): Предметы для пагинации
+            items (list[&quot;PreviewContent&quot;]): Элементы для пагинации
             total_page (int | None, optional): Общее количество страниц, нужно для пагинации пачками. По умолчанию None.
             end_page (bool | None, optional): Указать конец ли это страницы вручную, имеет приоритет у функции :class:`Pagination`. По умолчанию None.
 
@@ -187,13 +187,16 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
     """Базовый движок для парсинга"""
 
     BASE_BATCH: int = 10
-    """Базовая количество одновременных запросов"""
+    """Базовое количество одновременных запросов"""
 
     FIELDS_MAP: dict[str, str] | None = None
     """Карта для заполнений пример: `{'Теги': 'genre'}`"""
 
     BASE_MIDDLEWARE: list[type[SpiderMiddleware]] | type[SpiderMiddleware] | None = None
     """Базовые Middleware"""
+
+    REQUEST_CLIENT: type[BaseClient] | None = None
+    """Клиент для запросов для ручного выставление"""
 
     def __init__(
         self,
@@ -206,7 +209,7 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
         use_middleware: bool = True,
         **kwargs,
     ):
-        """Инициализаиция паука
+        """Инициализация паука
 
         Args:
             client (_C): Клиент для запросов, подробнее в :class:`BaseClient`
@@ -594,7 +597,7 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
 
         else:
             logger.warning(
-                "Не указана ни одна карата, будут проведены обычные процедуры"
+                "Не указана ни одна карта, будут проведены обычные процедуры"
             )
 
         return {
@@ -635,9 +638,10 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
         """Изменить параметр `use_middleware` на противопложный
 
         Returns:
-            bool: Текущий middleware
+            bool: Текущее значение use_middleware
         """
         self.use_middleware = not self.use_middleware
+        return self.use_middleware
 
     @property
     def client(self) -> _C:
@@ -669,7 +673,19 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
 
     @classmethod
     def need_client(cls) -> type[_C]:
+        if cls.REQUEST_CLIENT is not None:
+            return cls.REQUEST_CLIENT
+
         value = get_args(cls.__orig_bases__[0])[0]
         if isinstance(value, TypeVar):
             raise TypeError("Не указан необходимый тип")
         return value
+
+    def __init_subclass__(cls, abstract=False):
+        super().__init_subclass__(abstract)
+        try:
+            if cls.REQUEST_CLIENT is None:
+                cls.REQUEST_CLIENT = cls.need_client()
+
+        except TypeError:
+            pass

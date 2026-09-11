@@ -88,8 +88,14 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "ruff>=0.15.20",
 ]
 
 [tool.ruff]
 extend-exclude = ["migrations", "venv", "old_code.py", "alembic"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+norecursedirs = ["data", "tmp", ".git"]

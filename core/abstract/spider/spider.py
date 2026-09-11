@@ -533,7 +533,7 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
                                     },
                                 )
 
-                    except (asyncio.CancelledError, KeyboardInterrupt):
+                    except asyncio.CancelledError, KeyboardInterrupt:
                         await self._alert(
                             f"Паук `{self.name()}`, был остановлен пользователем.",
                             "info",

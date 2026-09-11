@@ -6,7 +6,7 @@ app = Celery(
     "daylib",
     backend=setting.backend,
     broker=setting.broker,
-    include=["core.tasks.video", "core.manager.spider._worker"],
+    include=["core.manager.spider._worker"],
 )
 
 app.conf.update(

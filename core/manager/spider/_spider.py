@@ -99,7 +99,7 @@ class SpiderManager:
         for spider in self._spiders:
             try:
                 await self.stop_spider(spider)
-            except (KeyError, ValueError, RuntimeError):
+            except KeyError, ValueError, RuntimeError:
                 pass
 
     async def start_spider(

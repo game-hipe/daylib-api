@@ -30,8 +30,6 @@ from core import __version__
 from core.config import setting
 from core.entitie.schema import GetContent, PaginationSchema
 
-from .endpoint.hentai import HentaiAPI
-from .endpoint.manga import MangaAPI
 from .endpoint.spider import SpiderAPI
 from .utils import pagination
 
@@ -106,8 +104,6 @@ class ContentAPI:
 
         self.app.include_router(self.content_router)
 
-        self._manga = MangaAPI(self, prefix="/manga", tags=["manga"])
-        self._hentai = HentaiAPI(self, prefix="/hentai", tags=["hentai"])
         self._spider = SpiderAPI(
             self,
             prefix="/spider",

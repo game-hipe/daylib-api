@@ -44,7 +44,7 @@ class SpiderAPI(BaseAPI):
     async def start_spider(
         self,
         *,
-        spider: Annotated[Spider, Query()],
+        spider: Annotated[Spider, Query()],  # type: ignore
         start_page: Annotated[int, Query(1, ge=1)],
         pagination_kwargs: Annotated[dict | None, Body(None)],
         update: Annotated[bool, Query(False)],
@@ -63,7 +63,7 @@ class SpiderAPI(BaseAPI):
     async def stop_spider(
         self,
         *,
-        spider: Annotated[Spider, Query()],
+        spider: Annotated[Spider, Query()],  # type: ignore
     ) -> SpiderStatusSnapshotSchema:
         try:
             status = await self.content.spider.stop_spider(spider)

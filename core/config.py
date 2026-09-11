@@ -107,8 +107,6 @@ class Settings(BaseSettings):
     admin: AdminSettings = AdminSettings()
     security: SecuritySettings = SecuritySettings()
 
-    video_path: str = "./video"
-
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

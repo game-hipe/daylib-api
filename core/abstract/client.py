@@ -175,7 +175,7 @@ class BaseClient(ABC, Generic[_S, _R]):
         work_proxy: list[str] = []
         for proxy, attempt in self.proxy.items():
             if self.ban_proxy:
-                if attempt > self.max_try:
+                if attempt < self.max_try:
                     work_proxy.append(proxy)
 
             else:

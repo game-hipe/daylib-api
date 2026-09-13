@@ -233,3 +233,5 @@ core/manager/spider/.spider_state.json
 *.example
 
 README.md
+images/
+docs/

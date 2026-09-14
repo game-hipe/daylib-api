@@ -94,7 +94,7 @@ class _BuildSchema(ABC, Generic[_R]):
             title=title,
             url=self.urljoin(url),
             poster=self.urljoin(poster),
-            tag=self.BASE_TAG or tag,
+            tag=tag or self.BASE_TAG,
         )
 
     def create_add(

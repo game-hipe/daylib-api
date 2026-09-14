@@ -48,7 +48,7 @@ class ExampleBookSpider(BaseSpider[AiohttpClient, dict]):
                     current_page=page, items=items, end_page=end_page
                 )
 
-    async def get_info(
+    async def get_info( 
         self, url, **kwargs
     ):  # Получить информацию об конкретном разделе
         return self.create_add(

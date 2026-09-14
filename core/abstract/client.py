@@ -21,6 +21,7 @@ class ClientResponse:
     attempt: int
     client: BaseClient
     error: ClientException | None = None
+    max_wait: float = 60
 
 
 class ClientConfig(TypedDict, total=False):
@@ -33,6 +34,7 @@ class ClientConfig(TypedDict, total=False):
     ban_proxy: bool
 
     wait_func: Callable[[ClientResponse], Awaitable]
+    max_wait: float
 
 
 class BaseClient(ABC, Generic[_S, _R]):
@@ -52,6 +54,7 @@ class BaseClient(ABC, Generic[_S, _R]):
         self.proxy: dict[str, int] = {proxy: 0 for proxy in config.get("proxy", [])}
         self.proxy_try: int = config.get("proxy_try", 3)
         self.ban_proxy: bool = config.get("ban_proxy", True)
+        self.max_wait: float = config.get("max_wait", 60.0)
 
         self.wait_func: Callable[[ClientResponse], Awaitable] = config.get(
             "wait_func", magic_backoff
@@ -135,11 +138,21 @@ class BaseClient(ABC, Generic[_S, _R]):
                         raise
                 finally:
                     wait_func = wait_func or self.wait_func
-                    await wait_func(
-                        ClientResponse(
-                            url=url, attempt=try_count, client=self, error=exception
+                    try:
+                        await asyncio.wait_for(
+                            wait_func(
+                                ClientResponse(
+                                    url=url,
+                                    attempt=try_count,
+                                    client=self,
+                                    error=exception,
+                                    max_wait=self.max_wait,
+                                )
+                            ),
+                            timeout=self.max_wait,
                         )
-                    )
+                    except asyncio.TimeoutError:
+                        pass
 
             raise MaxAttemtException(url=url, max_try=self.max_try, client=self)
 

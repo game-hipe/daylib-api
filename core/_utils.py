@@ -42,7 +42,7 @@ async def magic_backoff(response: ClientResponse):
     sleep_time = response.client.interval
     if isinstance(response.error, StatusCodeException):
         if response.error.status == 403:
-            sleep_time = 2 ** (response.client.interval * response.attempt)
+            response.client.interval * (2**response.attempt)
 
         if response.error.status == 500:
             sleep_time = response.client.interval * response.attempt

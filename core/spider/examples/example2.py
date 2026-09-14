@@ -6,7 +6,7 @@ from ..share import RequiredObjNotFoundException
 
 
 class ExampleBookSpider(BaseSpider[AiohttpClient, dict]):
-    BASE_TAG = "book"
+    BASE_TAG = "books"
     BASE_URL = "https://books.toscrape.com"
     PAGE_URL = "/catalogue/page-{page}.html"  # Кастомный атрибут для пагинации
     MAX_PAGE_PATTERN = r"Page\s+\d+\s+of\s+(\d+)"
@@ -48,7 +48,7 @@ class ExampleBookSpider(BaseSpider[AiohttpClient, dict]):
                     current_page=page, items=items, end_page=end_page
                 )
 
-    async def get_info( 
+    async def get_info(
         self, url, **kwargs
     ):  # Получить информацию об конкретном разделе
         return self.create_add(

@@ -335,13 +335,16 @@ class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
         first_page = await self.get_page(start_page, **kwargs)
         if status:
             status.update(first_page)
+
         if first_page.is_end:
             yield first_page
             return
 
+        yield first_page
+
         if first_page.total_page:
             for pages in batched(
-                range(start_page, first_page.total_page + 1), batch or self.batch
+                range(start_page + 1, first_page.total_page + 1), batch or self.batch
             ):
                 tasks = [asyncio.create_task(self.get_page(p, **kwargs)) for p in pages]
                 async for page in asyncio.as_completed(tasks):

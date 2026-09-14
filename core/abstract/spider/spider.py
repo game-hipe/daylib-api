@@ -61,9 +61,9 @@ class _BuildSchema(ABC, Generic[_R]):
             return
 
         if not hasattr(cls, "BASE_URL"):
-            URL_ERROR_MESSAGE = f"Не найден URL у паука {cls}"
-            logger.error(URL_ERROR_MESSAGE)
-            raise ValueError(URL_ERROR_MESSAGE)
+            error_msg = f"Не найден URL у паука {cls}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         if not cls.BASE_TAG:
             logger.info(
@@ -167,9 +167,16 @@ class _BuildSchema(ABC, Generic[_R]):
             end_page=end_page,
         )
 
+    @overload
     def urljoin(self, url: str) -> str:
         """Соеденить относительный URL с базовым"""
-        return urljoin(self.BASE_URL, url)
+
+    @overload
+    def urljoin(self, url: str, base_url: str) -> str:
+        """Соеденить относительный URL с кастомным"""
+
+    def urljoin(self, url: str, base_url: str | None = None) -> str:
+        return urljoin(base_url or self.BASE_URL, url)
 
 
 class BaseSpider(_BuildSchema[_R], Generic[_C, _R], abstract=True):
